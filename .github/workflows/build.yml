@@ -9,8 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout horizon-atlas source
         uses: actions/checkout@v4
+        with:
+          repository: MrCloudy2/horizon-atlas
+          ref: v0.2.0
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -35,11 +38,15 @@ jobs:
         run: |
           mkdir -p dist
           cp target/aarch64-linux-android/release/*.so dist/
-          cp mod.toml dist/ 2>/dev/null || true
-          cd dist && zip -r ../minimap-v0.2.3.hnmod .
+          if [ ! -f mod.toml ]; then
+            echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
+          else
+            cp mod.toml dist/
+          fi
+          cd dist && zip -r ../atlas-v0.2.3.hnmod .
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: minimap-hnmod-android
-          path: minimap-v0.2.3.hnmod
+          path: atlas-v0.2.3.hnmod
