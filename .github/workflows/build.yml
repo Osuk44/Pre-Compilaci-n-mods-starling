@@ -1,8 +1,10 @@
-name: Build Atlas Mod (.hnmod)
+name: Build and Release Atlas Mod (.hnmod)
 
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -41,7 +43,6 @@ jobs:
           with open("Cargo.toml", "r") as f:
               content = f.read()
 
-          # Agregar name y crate-type a la sección [lib] existente sin duplicarla
           target_str = "[lib]"
           replacement = "[lib]\nname = \"atlas\"\ncrate-type = [\"cdylib\"]"
 
@@ -49,9 +50,6 @@ jobs:
               content = content.replace(target_str, replacement, 1)
               with open("Cargo.toml", "w") as f:
                   f.write(content)
-              print("Cargo.toml configurado correctamente con cdylib.")
-          else:
-              print("La sección [lib] ya está configurada o no se encontró.")
           '
 
       - name: Compile native library for Android
@@ -80,3 +78,13 @@ jobs:
         with:
           name: atlas-hnmod-android
           path: atlas-v0.2.0.hnmod
+
+      - name: Release .hnmod to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: atlas-v0.2.0.hnmod
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
