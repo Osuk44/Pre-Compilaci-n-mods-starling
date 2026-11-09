@@ -59,11 +59,10 @@ jobs:
           set -e
           cargo ndk -t aarch64-linux-android --platform 33 build --release
 
-      - name: Locate and Package Mod Structure
+      - name: Locate and Package Mod Root
         run: |
           set -e
-          # Crear la jerarquía interna requerida por el gestor de mods
-          mkdir -p dist/mods/atlas
+          mkdir -p dist
           
           SO_FILE=$(find target -name "*.so" | head -n 1)
           if [ -z "$SO_FILE" ]; then
@@ -71,11 +70,12 @@ jobs:
             exit 1
           fi
           
-          cp "$SO_FILE" dist/mods/atlas/libatlas.so
-          echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mods/atlas/mod.toml
+          # Copiar archivos directamente a dist para empaquetar desde la raíz
+          cp "$SO_FILE" dist/libatlas.so
+          echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
           
-          # Comprimir con extensión .starling reconocida por el launcher
-          cd dist && zip -r ../atlas-v0.2.0.starling mods/
+          # Comprimir los archivos de la raíz (sin crear carpetas contenedoras)
+          cd dist && zip -r ../atlas-v0.2.0.starling libatlas.so mod.toml
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
