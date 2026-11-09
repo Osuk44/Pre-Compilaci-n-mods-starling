@@ -33,7 +33,11 @@ jobs:
       - name: Compile native library for Android
         run: |
           set -e
-          cargo ndk -t aarch64-linux-android build --release
+          # Exportar explícitamente la ruta del NDK para cargo-ndk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653
+          
+          # Compilar especificando la plataforma y modo verbose para diagnóstico
+          cargo ndk -t aarch64-linux-android --platform 33 build --release --verbose
 
       - name: Locate and Package .hnmod
         run: |
