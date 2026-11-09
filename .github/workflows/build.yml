@@ -1,4 +1,4 @@
-name: Build and Release Atlas Mod (.hnmod)
+name: Build and Release Atlas Mod for Starling
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # <-- ESTO ES VITAL PARA QUE PUEDA SUBIR EL .HNMOD AL RELEASE
+      contents: write
     steps:
       - name: Checkout horizon-atlas source
         uses: actions/checkout@v4
@@ -59,10 +59,11 @@ jobs:
           set -e
           cargo ndk -t aarch64-linux-android --platform 33 build --release
 
-      - name: Locate and Package .hnmod
+      - name: Locate and Package Mod Structure
         run: |
           set -e
-          mkdir -p dist
+          # Crear la jerarquía interna requerida por el gestor de mods
+          mkdir -p dist/mods/atlas
           
           SO_FILE=$(find target -name "*.so" | head -n 1)
           if [ -z "$SO_FILE" ]; then
@@ -70,21 +71,22 @@ jobs:
             exit 1
           fi
           
-          cp "$SO_FILE" dist/libatlas.so
-          echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
+          cp "$SO_FILE" dist/mods/atlas/libatlas.so
+          echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mods/atlas/mod.toml
           
-          cd dist && zip -r ../atlas-v0.2.0.hnmod .
+          # Comprimir con extensión .starling reconocida por el launcher
+          cd dist && zip -r ../atlas-v0.2.0.starling mods/
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-hnmod-android
-          path: atlas-v0.2.0.hnmod
+          name: atlas-starling-package
+          path: atlas-v0.2.0.starling
 
-      - name: Release .hnmod to GitHub Releases
+      - name: Release to GitHub Releases
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: atlas-v0.2.0.hnmod
+          files: atlas-v0.2.0.starling
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
