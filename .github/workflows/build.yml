@@ -37,8 +37,10 @@ jobs:
       - name: Package .hnmod artifact
         run: |
           mkdir -p dist
-          # Busca recursivamente el archivo .so compilado para aarch64 y cópialo a dist
-          find target/ -name "*.so" -exec cp {} dist/ \
+          # Bucle robusto para copiar todos los archivos .so encontrados recursivamente
+          for file in $(find target/ -name "*.so"); do
+            cp "$file" dist/
+          done
 
           if [ ! -f mod.toml ]; then
             echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
