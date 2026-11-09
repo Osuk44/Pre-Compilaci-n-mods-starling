@@ -25,13 +25,25 @@ jobs:
         with:
           targets: aarch64-linux-android
 
+      - name: Install Cargo NDK
+        run: cargo install cargo-ndk
+
+      - name: Setup Android NDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 8512546
+          ndk-version: 25.2.9519653
+          packages: "build-tools;33.0.2 platforms;android-33 platform-tools"
+
+      - name: Compile native library for Android
+        run: |
+          set -e
+          cargo ndk -t aarch64-linux-android build --release
+
       - name: Run packaging script
         run: |
           set -e
-          # Ejecutar el script oficial provisto por el repositorio para generar el .hnmod
           python3 tools/package.py
-          
-          # Crear carpeta de distribución y mover el archivo generado
           mkdir -p dist
           find . -name "*.hnmod" -exec cp {} dist/ \;
 
@@ -40,5 +52,3 @@ jobs:
         with:
           name: atlas-hnmod-android
           path: dist/*.hnmod
-
-
