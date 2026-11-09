@@ -21,9 +21,10 @@ jobs:
         run: cargo install cargo-ndk
 
       - name: Setup Android NDK
-        uses: nono73/setup-android-ndk@v1
+        uses: android-actions/setup-android@v3
         with:
-          ndk-version: r25c
+          cmdline-tools-version: 8512546
+          ndk-version: 25.2.9519653
 
       - name: Build target library
         run: |
