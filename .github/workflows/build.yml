@@ -15,11 +15,6 @@ jobs:
           repository: MrCloudy2/horizon-atlas
           ref: v0.2.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -40,15 +35,29 @@ jobs:
           set -e
           cargo ndk -t aarch64-linux-android build --release
 
-      - name: Run packaging script
+      - name: Package .hnmod manually
         run: |
           set -e
-          python3 tools/package.py
           mkdir -p dist
-          find . -name "*.hnmod" -exec cp {} dist/ \;
+          
+          # Buscar el archivo .so generado por Rust
+          SO_FILE=$(find target/aarch64-linux-android/release/ -name "*.so" | head -n 1)
+          if [ -z "$SO_FILE" ]; then
+            echo "ERROR: No se encontró el archivo .so compilado."
+            exit 1
+          fi
+          
+          # Copiar la librería compilada a la carpeta de distribución
+          cp "$SO_FILE" dist/
+          
+          # Crear el archivo mod.toml obligatorio para el mod nativo
+          echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
+          
+          # Comprimir en formato .hnmod
+          cd dist && zip -r ../atlas-v0.2.0.hnmod .
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: atlas-hnmod-android
-          path: dist/*.hnmod
+          path: atlas-v0.2.0.hnmod
