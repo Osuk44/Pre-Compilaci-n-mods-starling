@@ -1,0 +1,44 @@
+
+me: Build Native Mod (.hnmod)
+
+on:
+  push:
+      branches: [ main, master ]
+        workflow_dispatch:
+
+        jobs:
+          build:
+              runs-on: ubuntu-latest
+                  steps:
+                        - name: Checkout repository
+                                uses: actions/checkout@v4
+
+                                      - name: Install Rust toolchain
+                                              uses: dtolnay/rust-toolchain@stable
+                                                      with:
+                                                                targets: aarch64-linux-android
+
+                                                                      - name: Install Cargo NDK
+                                                                              run: cargo install cargo-ndk
+
+                                                                                    - name: Setup Android NDK
+                                                                                            uses: nsetup/setup-android-ndk@v1
+                                                                                                    with:
+                                                                                                              ndk-version: r25c
+
+                                                                                                                    - name: Build target library
+                                                                                                                            run: |
+                                                                                                                                      cargo ndk -t aarch64-linux-android build --release
+
+                                                                                                                                            - name: Package .hnmod artifact
+                                                                                                                                                    run: |
+                                                                                                                                                              mkdir -p dist
+                                                                                                                                                                        cp target/aarch64-linux-android/release/*.so dist/
+                                                                                                                                                                                  cp mod.toml dist/ 2>/dev/null || true
+                                                                                                                                                                                            cd dist && zip -r ../minimap-v0.2.3.hnmod .
+
+                                                                                                                                                                                                  - name: Upload Build Artifact
+                                                                                                                                                                                                          uses: actions/upload-artifact@v4
+                                                                                                                                                                                                                  with:
+                                                                                                                                                                                                                            name: minimap-hnmod-android
+                                                                                                                                                                                                                                      path: minimap-v0.2.3.hnmod
