@@ -1,4 +1,4 @@
-name: Build Native Mod (.hnmod)
+name: Build Atlas Mod (.hnmod)
 
 on:
   push:
@@ -15,50 +15,30 @@ jobs:
           repository: MrCloudy2/horizon-atlas
           ref: v0.2.0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
 
-      - name: Install Cargo NDK
-        run: cargo install cargo-ndk
-
-      - name: Setup Android NDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 8512546
-          ndk-version: 25.2.9519653
-          packages: "build-tools;33.0.2 platforms;android-33 platform-tools"
-
-      - name: Build target library
+      - name: Run packaging script
         run: |
           set -e
-          cargo ndk -t aarch64-linux-android build --release
-
-      - name: Package .hnmod artifact
-        run: |
-          set -e
+          # Ejecutar el script oficial provisto por el repositorio para generar el .hnmod
+          python3 tools/package.py
+          
+          # Crear carpeta de distribución y mover el archivo generado
           mkdir -p dist
-          
-          # Buscar el archivo .so y forzar fallo si no existe
-          SO_FILE=$(find target/ -name "*.so" | head -n 1)
-          if [ -z "$SO_FILE" ]; then
-            echo "ERROR: No se encontró ningún archivo .so compilado."
-            exit 1
-          fi
-          
-          cp "$SO_FILE" dist/
-          
-          if [ ! -f mod.toml ]; then
-            echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
-          else
-            cp mod.toml dist/
-          fi
-
-          cd dist && zip -r ../atlas-v0.2.3.hnmod .
+          find . -name "*.hnmod" -exec cp {} dist/ \;
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: minimap-hnmod-android
-          path: atlas-v0.2.3.hnmod
+          name: atlas-hnmod-android
+          path: dist/*.hnmod
+
+
