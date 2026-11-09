@@ -33,29 +33,22 @@ jobs:
       - name: Compile native library for Android
         run: |
           set -e
-          # Exportar explícitamente la ruta del NDK para cargo-ndk
+          # Usar la ruta que provee el entorno automáticamente para la versión instalada
           export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653
-          
-          # Compilar especificando la plataforma y modo verbose para diagnóstico
-          cargo ndk -t aarch64-linux-android --platform 33 build --release --verbose
+          cargo ndk -t aarch64-linux-android --platform 33 build --release
 
       - name: Locate and Package .hnmod
         run: |
           set -e
           mkdir -p dist
           
-          # Búsqueda recursiva de cualquier archivo .so en el directorio de compilación
-          echo "Buscando archivos .so generados..."
-          find target -name "*.so"
-          
           SO_FILE=$(find target -name "*.so" | head -n 1)
           if [ -z "$SO_FILE" ]; then
-            echo "ERROR CRITICO: Ningún archivo .so fue compilado. Revisa la estructura del proyecto."
+            echo "ERROR CRITICO: Ningún archivo .so fue compilado."
             exit 1
           fi
           
           cp "$SO_FILE" dist/libatlas.so
-          
           echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
           
           cd dist && zip -r ../atlas-v0.2.0.hnmod .
