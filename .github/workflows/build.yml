@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # <-- ESTO ES VITAL PARA QUE PUEDA SUBIR EL .HNMOD AL RELEASE
     steps:
       - name: Checkout horizon-atlas source
         uses: actions/checkout@v4
@@ -86,5 +88,3 @@ jobs:
           files: atlas-v0.2.0.hnmod
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
