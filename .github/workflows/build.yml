@@ -33,8 +33,7 @@ jobs:
       - name: Compile native library for Android
         run: |
           set -e
-          # Usar la ruta que provee el entorno automáticamente para la versión instalada
-          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653
+          # cargo-ndk detectará automáticamente el NDK configurado por el entorno
           cargo ndk -t aarch64-linux-android --platform 33 build --release
 
       - name: Locate and Package .hnmod
