@@ -15,6 +15,11 @@ jobs:
           repository: MrCloudy2/horizon-atlas
           ref: v0.2.0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -30,14 +35,24 @@ jobs:
       - name: Install Cargo NDK
         run: cargo install cargo-ndk
 
-      - name: Configure Cargo.toml for cdylib
+      - name: Configure Cargo.toml for cdylib safely
         run: |
-          # Añadir el tipo de librería dinámica de forma automática al Cargo.toml
-          echo '' >> Cargo.toml
-          echo '[lib]' >> Cargo.toml
-          echo 'name = "atlas"' >> Cargo.toml
-          echo 'crate-type = ["cdylib"]' >> Cargo.toml
-          echo 'path = "mixins/atlas/core.rs"' >> Cargo.toml
+          python3 -c '
+          with open("Cargo.toml", "r") as f:
+              content = f.read()
+
+          # Agregar name y crate-type a la sección [lib] existente sin duplicarla
+          target_str = "[lib]"
+          replacement = "[lib]\nname = \"atlas\"\ncrate-type = [\"cdylib\"]"
+
+          if target_str in content and "crate-type" not in content:
+              content = content.replace(target_str, replacement, 1)
+              with open("Cargo.toml", "w") as f:
+                  f.write(content)
+              print("Cargo.toml configurado correctamente con cdylib.")
+          else:
+              print("La sección [lib] ya está configurada o no se encontró.")
+          '
 
       - name: Compile native library for Android
         run: |
@@ -53,7 +68,7 @@ jobs:
           if [ -z "$SO_FILE" ]; then
             echo "ERROR CRITICO: Ningún archivo .so fue compilado."
             exit 1
-          end
+          fi
           
           cp "$SO_FILE" dist/libatlas.so
           echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
