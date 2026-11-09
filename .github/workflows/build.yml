@@ -15,13 +15,15 @@ jobs:
           repository: MrCloudy2/horizon-atlas
           ref: v0.2.0
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
-
-      - name: Install Cargo NDK
-        run: cargo install cargo-ndk
 
       - name: Setup Android NDK
         uses: android-actions/setup-android@v3
@@ -30,10 +32,13 @@ jobs:
           ndk-version: 25.2.9519653
           packages: "build-tools;33.0.2 platforms;android-33 platform-tools"
 
+      - name: Install Cargo NDK
+        run: cargo install cargo-ndk
+
       - name: Compile native library for Android
         run: |
           set -e
-          # cargo-ndk detectará automáticamente el NDK configurado por el entorno
+          # cargo-ndk detectará automáticamente el NDK configurado por el entorno de GitHub Actions
           cargo ndk -t aarch64-linux-android --platform 33 build --release
 
       - name: Locate and Package .hnmod
@@ -41,15 +46,20 @@ jobs:
           set -e
           mkdir -p dist
           
+          # Búsqueda recursiva del binario .so compilado por Rust
           SO_FILE=$(find target -name "*.so" | head -n 1)
           if [ -z "$SO_FILE" ]; then
             echo "ERROR CRITICO: Ningún archivo .so fue compilado."
             exit 1
           fi
           
+          # Copiar la librería compartida al directorio de distribución
           cp "$SO_FILE" dist/libatlas.so
+          
+          # Crear el archivo mod.toml obligatorio requerido por el mod
           echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
           
+          # Comprimir todo en formato .hnmod (ZIP)
           cd dist && zip -r ../atlas-v0.2.0.hnmod .
 
       - name: Upload Build Artifact
