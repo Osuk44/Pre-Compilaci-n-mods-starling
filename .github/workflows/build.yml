@@ -32,22 +32,29 @@ jobs:
 
       - name: Build target library
         run: |
+          set -e
           cargo ndk -t aarch64-linux-android build --release
 
       - name: Package .hnmod artifact
         run: |
+          set -e
           mkdir -p dist
-          # Copiar la librería .so compilada directamente a la raíz de dist
-          cp target/aarch64-linux-android/release/*.so dist/ 2>/dev/null || find target/ -name "*.so" -exec cp {} dist/ \;
-
-          # Crear o copiar el mod.toml directamente en la raíz de dist
+          
+          # Buscar el archivo .so y forzar fallo si no existe
+          SO_FILE=$(find target/ -name "*.so" | head -n 1)
+          if [ -z "$SO_FILE" ]; then
+            echo "ERROR: No se encontró ningún archivo .so compilado."
+            exit 1
+          fi
+          
+          cp "$SO_FILE" dist/
+          
           if [ ! -f mod.toml ]; then
             echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
           else
             cp mod.toml dist/
           fi
 
-          # Comprimir el contenido asegurando que queden en la raíz del zip
           cd dist && zip -r ../atlas-v0.2.3.hnmod .
 
       - name: Upload Build Artifact
