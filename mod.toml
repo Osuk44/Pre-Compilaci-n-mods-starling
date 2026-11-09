@@ -1,1 +1,11 @@
 
+[mod]
+id = "minimap"
+name = "Minimap (Atlas)"
+version = "0.2.0"
+target_game_version = "0.2.3" # Debe coincidir con la versión exacta de Starling
+
+[permissions]
+# Si el mod requiere grabar audio o micrófono (cpal/aaudio), se declara aquí;
+# el build server de Starling lo lee con native_mod_permissions.py
+microphone = false
