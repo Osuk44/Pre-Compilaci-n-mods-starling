@@ -37,7 +37,9 @@ jobs:
       - name: Package .hnmod artifact
         run: |
           mkdir -p dist
-          cp target/aarch64-linux-android/release/*.so dist/
+          # Busca recursivamente el archivo .so compilado para aarch64 y cópialo a dist
+          find target/ -name "*.so" -exec cp {} dist/ \
+
           if [ ! -f mod.toml ]; then
             echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
           else
