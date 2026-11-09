@@ -37,16 +37,17 @@ jobs:
       - name: Package .hnmod artifact
         run: |
           mkdir -p dist
-          # Bucle robusto para copiar todos los archivos .so encontrados recursivamente
-          for file in $(find target/ -name "*.so"); do
-            cp "$file" dist/
-          done
+          # Copiar la librería .so compilada directamente a la raíz de dist
+          cp target/aarch64-linux-android/release/*.so dist/ 2>/dev/null || find target/ -name "*.so" -exec cp {} dist/ \;
 
+          # Crear o copiar el mod.toml directamente en la raíz de dist
           if [ ! -f mod.toml ]; then
             echo -e '[mod]\nid = "atlas"\nname = "Atlas Minimap"\nversion = "0.2.0"\ntarget_game_version = "0.2.3"' > dist/mod.toml
           else
             cp mod.toml dist/
           fi
+
+          # Comprimir el contenido asegurando que queden en la raíz del zip
           cd dist && zip -r ../atlas-v0.2.3.hnmod .
 
       - name: Upload Build Artifact
